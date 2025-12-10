@@ -1,0 +1,18 @@
+cargo-features = ["profile-rustflags"]
+
+[package]
+name = "osu-ranker"
+version = "0.1.0"
+edition = "2024"
+
+[profile.release]
+rustflags = ["-C", "target-cpu=native"]
+
+[dependencies]
+bzip2 = "0.6"
+mimalloc = "0.1"
+rayon = "1.11"
+reqwest = { version = "0.12", features = ["blocking"]}
+serde = { version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+tar = "0.4.44"
