@@ -119,7 +119,7 @@ for gamemode in [
     for k, skill in enumerate(fit_beta, 1):
         user_skills.append((user_mapping_reverse[k], skill))
 
-    user_skills.sort(key=lambda x: np.mean(x[1]), reverse=True)
+    user_skills.sort(key=lambda x: np.mean(x[1]))
 
     with open("{}_ranking.txt".format(gamemode), "w") as f:
         for user, skill in user_skills:
