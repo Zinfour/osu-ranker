@@ -40,11 +40,7 @@ for gamemode in [
     )
 
     with open("./processed_score_files/{}.json".format(gamemode)) as f:
-        # rows = 0
         for user_id, map_id, mods, score in json.load(f):
-            # rows += 1
-            # if rows > 100_000:
-            #     break
             mapped_map = map_mapping.get(str((map_id, mods)))
             if mapped_map is None:
                 id = len(map_mapping) + 1
@@ -97,7 +93,13 @@ for gamemode in [
                 "beta": np.full(data["P"], 0.001),
             },
         )
-        fit_beta = fit.beta
+        fit_beta_mean = - np.log(fit.beta)
+        fit_beta_mean = 2 + (fit_beta_mean-np.mean(fit_beta_mean))/np.var(fit_beta_mean)
+        fit_beta_rankings = (
+            len(fit_beta_mean)
+            - 1
+            - np.argsort(np.argsort(fit.beta, axis=-1), axis=-1)
+        ) / (len(fit_beta_mean) - 1)
     else:
         fit = model.sample(
             data=data,
@@ -109,19 +111,24 @@ for gamemode in [
             },
             threads_per_chain=8,
         )
-        np.save("{}".format(gamemode), fit.beta)
-        fit_beta = np.mean(fit.beta, axis=0)
+        fit_beta_mean = - np.log(np.mean(fit.beta, axis=0))
+        fit_beta_mean = 2 + (fit_beta_mean-np.mean(fit_beta_mean))/np.var(fit_beta_mean)
+        fit_beta_rankings = (
+            len(fit_beta_mean)
+            - 1
+            - np.mean(np.argsort(np.argsort(fit.beta, axis=-1), axis=-1), axis=0)
+        ) / (len(fit_beta_mean) - 1)
 
     print("sampling done")
 
     user_skills = []
 
-    for k, skill in enumerate(fit_beta, 1):
-        user_skills.append((user_mapping_reverse[k], skill))
+    for k, (skill, rank) in enumerate(zip(fit_beta_mean, fit_beta_rankings), 1):
+        user_skills.append((user_mapping_reverse[k], skill, rank))
 
-    user_skills.sort(key=lambda x: np.mean(x[1]))
+    user_skills.sort(key=lambda x: np.mean(x[2]), reverse=True)
 
     with open("{}_ranking.txt".format(gamemode), "w") as f:
-        for user, skill in user_skills:
-            print(user, skill, user_id_to_username[user], sep=",", file=f)
+        for user, skill, rank in user_skills:
+            print(user, skill, rank, user_id_to_username[user], sep=",", file=f)
     print("saving done")
