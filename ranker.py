@@ -111,7 +111,7 @@ for gamemode in [
             },
             threads_per_chain=8,
         )
-        fit_beta_mean = - np.log(np.mean(fit.beta, axis=0))
+        fit_beta_mean = - np.mean(np.log(fit.beta), axis=0)
         fit_beta_mean = 2 + (fit_beta_mean-np.mean(fit_beta_mean))/np.var(fit_beta_mean)
         fit_beta_rankings = (
             len(fit_beta_mean)
