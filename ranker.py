@@ -23,7 +23,7 @@ for gamemode in [
     user_id_to_username = {}
     with open("./processed_score_files/{}_users.csv".format(gamemode)) as f:
         for line in f:
-            user_id, username = line.split(",", maxsplit=1)
+            user_id, username = line.split(",", maxsplit=2)
             user_id = int(user_id)
             username = username[1:-2]
             user_id_to_username[user_id] = username
