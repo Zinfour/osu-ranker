@@ -10,6 +10,7 @@ rustflags = ["-C", "target-cpu=native"]
 
 [dependencies]
 bzip2 = "0.6"
+itertools = "0.14.0"
 mimalloc = "0.1"
 rayon = "1.11"
 reqwest = { version = "0.12", features = ["blocking"]}

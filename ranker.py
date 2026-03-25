@@ -21,12 +21,16 @@ for gamemode in [
 ]:
 
     user_id_to_username = {}
+    user_id_to_scores = {}
+    user_id_to_pp = {}
     with open("./processed_score_files/{}_users.csv".format(gamemode)) as f:
         for line in f:
-            user_id, username = line.split(",", maxsplit=2)
+            user_id, username, scores, pp = line.strip().split(",", maxsplit=3)
             user_id = int(user_id)
-            username = username[1:-2]
+            username = username[1:-1]
             user_id_to_username[user_id] = username
+            user_id_to_scores[user_id] = scores
+            user_id_to_pp[user_id] = pp
 
     user_mapping = {}
     user_mapping_reverse = {}
@@ -128,7 +132,7 @@ for gamemode in [
 
     user_skills.sort(key=lambda x: np.mean(x[2]), reverse=True)
 
-    with open("{}_ranking.txt".format(gamemode), "w") as f:
+    with open("./outputs/{}_ranking.csv".format(gamemode), "w") as f:
         for user, skill, rank in user_skills:
-            print(user, skill, rank, user_id_to_username[user], sep=",", file=f)
+            print(user, skill, rank, user_id_to_username[user], user_id_to_scores[user], user_id_to_pp[user], sep=",", file=f)
     print("saving done")

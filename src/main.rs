@@ -1,5 +1,6 @@
 use {
     bzip2::read::BzDecoder,
+    itertools::Itertools,
     mimalloc::MiMalloc,
     rayon::iter::{ParallelBridge, ParallelIterator},
     serde::{Deserialize, Serialize},
@@ -282,7 +283,9 @@ fn main() {
         );
     }
 
-    ["catch", "taiko", "mania", "osu"]
+    [
+        // "catch", "taiko", "mania", 
+    "osu"]
         .into_iter()
         .map(|mode_name| {
             let inp_file = files
@@ -291,8 +294,6 @@ fn main() {
                 .find(|z| z.contains(&format!("{}_top_10000.tar", mode_name)))
                 .unwrap();
 
-
-            
             eprintln!("starting downloading {}", inp_file);
             let response = reqwest::blocking::Client::builder()
                 .timeout(None)
@@ -483,6 +484,40 @@ fn main() {
                 });
             eprintln!("parsed score data for {}", mode_name);
 
+            let mut scores_per_user: HashMap<_, Vec<_>> = HashMap::new();
+            for ((user_id, beatmap_id, _), pp) in &counted_scores {
+                scores_per_user
+                    .entry(*user_id)
+                    .or_default()
+                    .push((*beatmap_id, *pp));
+            }
+            let mut total_pp_per_user = HashMap::new();
+            for (user_id, scores) in scores_per_user {
+                let mut deduped_scores = HashMap::new();
+                for (beatmap_id, pp) in scores {
+                    deduped_scores
+                        .entry(beatmap_id)
+                        .and_modify(|current_pp| {
+                            if pp > *current_pp {
+                                *current_pp = pp
+                            }
+                        })
+                        .or_insert(pp);
+                }
+                let weighted_pp = deduped_scores
+                    .values()
+                    .sorted_by(|a, b| a.partial_cmp(b).unwrap())
+                    .rev()
+                    .enumerate()
+                    .map(|(n, pp)| *pp * 0.95_f32.powi(n as i32))
+                    .sum::<f32>();
+
+                let bonus_pp =
+                    416.6667 * (1.0 - 0.995_f32.powi(deduped_scores.len().min(1000) as i32));
+                println!("### {}, {}", user_id, weighted_pp + bonus_pp);
+                total_pp_per_user.insert(user_id, weighted_pp + bonus_pp);
+            }
+
             let chosen_scores = solve_greedy(counted_scores, 100, mode_name);
 
             let chosen_scores = chosen_scores
@@ -506,10 +541,11 @@ fn main() {
             for (k, v) in user_data.into_iter() {
                 writeln!(
                     &mut file,
-                    "{},{},{}",
+                    "{},{},{},{}",
                     k,
                     v,
-                    score_count.get(&k).copied().unwrap_or(0)
+                    score_count.get(&k).copied().unwrap_or(0),
+                    total_pp_per_user.get(&k).copied().unwrap_or(0.0),
                 )
                 .unwrap();
             }
