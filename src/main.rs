@@ -283,9 +283,7 @@ fn main() {
         );
     }
 
-    [
-        // "catch", "taiko", "mania", 
-    "osu"]
+    ["catch", "taiko", "mania", "osu"]
         .into_iter()
         .map(|mode_name| {
             let inp_file = files
