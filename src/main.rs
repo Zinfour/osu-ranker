@@ -512,7 +512,6 @@ fn main() {
 
                 let bonus_pp =
                     416.6667 * (1.0 - 0.995_f32.powi(deduped_scores.len().min(1000) as i32));
-                println!("### {}, {}", user_id, weighted_pp + bonus_pp);
                 total_pp_per_user.insert(user_id, weighted_pp + bonus_pp);
             }
 
